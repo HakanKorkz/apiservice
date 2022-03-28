@@ -1,3 +1,5 @@
+<h2>Partners <a href="new_partner">Add</a></h2>
+
 <?php
 
 // hepsi

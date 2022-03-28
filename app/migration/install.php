@@ -2,6 +2,7 @@
 
 $this->addLayer([
     'app/migration/tables/partners',
-    // 'app/migration/products'
+    'app/migration/tables/branches',
+    'app/migration/tables/products'
 ]);
 

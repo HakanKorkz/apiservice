@@ -33,8 +33,7 @@ if($this->validate($rule, $this->post, $message)){
         'partner_password'=>md5($this->post['partner_password']),
         'partner_token'=>$this->generateToken(14),
         'partner_status'=>true,
-        'created_at'=>$this->timestamp,
-        'updated_at'=>$this->timestamp
+        'created_at'=>$this->timestamp
     ];
 
     if($this->insert('partners', $values)){
