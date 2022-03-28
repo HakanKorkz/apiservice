@@ -27,7 +27,6 @@ $Mind->route('/', ['app/views/partners', 'app/views/branches', 'app/views/produc
 $Mind->route('api', 'app/api/partner'); // post
 $Mind->route('test/api', 'app/views/api'); // form
 
-
 $Mind->route('new_partner', 'app/views/new_partner');
 $Mind->route('new_branch', 'app/views/new_branch');
 $Mind->route('new_product', 'app/views/new_product');
