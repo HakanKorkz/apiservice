@@ -2,9 +2,9 @@
 It helps to provide API support to projects. It is Simple, Safe and Fast.
 
 ## Setup
-After downloading the project, update your database username and password in the `index.php` file. Make sure you don't have a database named 'appservice' before.
+After downloading the project, update your database username and password in the `index.php` file. Make sure you don't have a database named `apiservice` before.
 
-If you want to change your database name, update 'appservice' with the new database name in the files in the directory below.
+If you want to change your database name, update `apiservice` with the new database name in the files in the directory below.
 `app/migration/backups`.
 
 ## Get started
