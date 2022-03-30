@@ -2,6 +2,12 @@
 It helps to provide API support to projects. It is Simple, Safe and Fast.
 
 ## Setup
+
+```php
+composer create-project mind/apiservice
+```
+or 
+
 After downloading the project, update your database username and password in the `index.php` file. Make sure you don't have a database named `apiservice` before.
 
 If you want to change your database name, update `apiservice` with the new database name in the files in the directory below.
