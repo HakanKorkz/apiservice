@@ -1,6 +1,6 @@
 {
-    "name": "mind/project",
-    "description": "It is an example of a lean project created for you to start developing projects with Mind framework immediately.",
+    "name": "mind/apiservice",
+    "description": "It helps to provide API support to projects. It is Simple, Safe and Fast.",
     "type": "project",
     "license": "GPL-3.0-or-later",
     "authors": [
