@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.0
+ * @version    Release: 5.0.1
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -2959,30 +2959,45 @@ class Mind extends PDO
         $ssl = "Set-Cookie: user=t=".$this->generateToken()."; path=/; Secure";
         $hsts = "Strict-Transport-Security: max-age=16070400; includeSubDomains; preload";
 
-        $conf['firewall']['noiframe'] = (isset($conf['firewall']['noiframe']) ? $conf['firewall']['noiframe'] : TRUE);
-        $conf['firewall']['noxss'] = (isset($conf['firewall']['noxss']) ? $conf['firewall']['noxss'] : TRUE);
-        $conf['firewall']['nosniff'] = (isset($conf['firewall']['nosniff']) ? $conf['firewall']['nosniff'] : TRUE);
-        $conf['firewall']['ssl'] = (isset($conf['firewall']['ssl']) ? $conf['firewall']['ssl'] : FALSE);
-        $conf['firewall']['hsts'] = (isset($conf['firewall']['hsts']) ? $conf['firewall']['hsts'] : FALSE);
-        $conf['firewall']['csrf'] = (isset($conf['firewall']['csrf']) ? $conf['firewall']['csrf'] : TRUE);
+        $noiframe_status = (isset($conf['noiframe']) AND $conf['firewall']['noiframe'] == TRUE) ? TRUE : FALSE;
+        $noxss_status = (isset($conf['firewall']['noxss']) AND $conf['firewall']['noxss'] == TRUE) ? TRUE : FALSE;
+        $nosniff_status = (isset($conf['firewall']['nosniff']) AND $conf['firewall']['nosniff'] == TRUE) ? TRUE : FALSE;
+        $ssl_status = (isset($conf['firewall']['ssl']) AND $conf['firewall']['ssl'] == TRUE) ? TRUE : FALSE;
+        $hsts_status = (isset($conf['firewall']['hsts']) AND $conf['firewall']['hsts'] == TRUE) ? TRUE : FALSE;
+
+        if($noiframe_status === TRUE){ header($noiframe); }
+        if($noxss_status === TRUE){ header($noxss); }
+        if($nosniff_status === TRUE){ header($nosniff); }
+        if($ssl_status === TRUE){ header($ssl); }
+        if($hsts_status === TRUE){ header($hsts); }
+
+        if($ssl_status === TRUE AND $this->is_ssl() === FALSE){
+            $this->abort('400', 'SSL is required.');
+        }        
+        if($hsts_status === TRUE AND ($this->is_ssl() OR $ssl_status == FALSE)){
+            $this->abort('503', 'SSL is required for HSTS.');
+        }
         
+        $limit = 200;
+        $name = 'csrf_token';
+        $status = true;
 
-        ($conf['firewall']['noiframe']) ? header($noiframe) : header($noiframe);
-        ($conf['firewall']['noxss']) ? header($noxss) : header($noxss);
-        ($conf['firewall']['nosniff']) ? header($nosniff) : header($nosniff);
-        
-        if($conf['firewall']['ssl'] AND !$this->is_ssl()){
-            $this->abort('502', 'SSL is required.'); 
-        } else { header($ssl); }
+        if(!empty($conf)){
 
-        if(($conf['firewall']['hsts'] AND !$this->is_ssl()) OR 
-        (!$conf['firewall']['ssl'] AND $conf['firewall']['hsts'])){
-            $this->abort('503', 'SSL is required for HSTS.'); 
-        } else { header($hsts); }
+            if(isset($conf['firewall']['csrf'])){
+                if(!empty($conf['firewall']['csrf']['name'])){
+                    $name = $conf['firewall']['csrf']['name'];
+                }
+                if(!empty($conf['firewall']['csrf']['limit'])){
+                    $limit = $conf['firewall']['csrf']['limit'];
+                }
+                if(is_bool($conf['firewall']['csrf'])){
+                    $status = $conf['firewall']['csrf'];
+                }
+            }            
+        }
 
-        if($conf['firewall']['csrf']){
-            $name = (isset($conf['firewall']['csrf']['name'])) ? $conf['firewall']['csrf']['name'] : 'csrf_token';
-            $limit = (isset($conf['firewall']['csrf']['limit'])) ? $conf['firewall']['csrf']['limit'] : rand(400,4000);
+        if($status){
 
             if($_SERVER['REQUEST_METHOD'] === 'POST'){
                 if(isset($this->post[$name]) AND isset($_SESSION['csrf']['token'])){
@@ -3898,6 +3913,7 @@ class Mind extends PDO
         return $result;
         
     }
+
     
     /**
      * Detecting an operating system
