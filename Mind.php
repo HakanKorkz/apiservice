@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.1
+ * @version    Release: 5.0.2
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -4264,6 +4264,15 @@ class Mind extends PDO
                 "Connection" => "keep-alive"
             );
 
+            if(!empty($options['authorization'])){
+                curl_setopt($ch, CURLOPT_USERPWD, $options['authorization']['username'] . ":" . $options['authorization']['password']);
+            }
+
+            if(!empty($options['attachment'])){
+                $options['post']['file'] = new CURLFile($options['attachment']);
+                $defaultHeader['Content-Type'] = 'multipart/form-data';
+            }
+
             if(isset($options['header'])){
                 foreach ($options['header'] as $column => $value) {
                     $defaultHeader[] = $column.':'.$value;
@@ -4276,6 +4285,7 @@ class Mind extends PDO
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
             if($this->sess_set['status_session']){
                 if(!$this->sess_set['path_status']){
                     $this->sess_set['path'] = sys_get_temp_dir().'/';
@@ -4292,11 +4302,12 @@ class Mind extends PDO
             }
             if(!empty($options['post'])){
                 curl_setopt($ch, CURLOPT_POST, true);
-                if(is_array($options['post'])){
+                if(is_array($options['post']) AND !isset($options['attachment'])){
                     $options['post'] = http_build_query($options['post']);
                 }
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $options['post']);
             }
+            
             if(!empty($options['referer'])){
                 curl_setopt($ch, CURLOPT_REFERER, $options['referer']);
             }
