@@ -4,7 +4,7 @@ if(empty($this->post)){
     return null;
 }
 
-$this->post['branch_id'] = $this->post['branch_id'] ?? '';
+$this->post['seller_id'] = $this->post['seller_id'] ?? '';
 $this->post['product_type'] = $this->post['product_type'] ?? '';
 $this->post['product_type'] = in_array($this->post['product_type'], ['count', 'nocount']) ? $this->post['product_type'] : '';
 $this->post['product_code'] = $this->post['product_code'] ?? '';
@@ -18,7 +18,7 @@ $this->post['product_status'] = $this->post['product_status'] ?? '';
 $this->post['product_status'] = in_array($this->post['product_status'], [true, false]) ? (bool)$this->post['product_status'] : null;
 
 $rule = [
-    'branch_id'=>'required|available:branches:id',
+    'seller_id'=>'required|available:sellers:id',
     'product_type'=>'required',
     'product_code'=>'required|unique:products',
     'product_name'=>'required|unique:products',
@@ -35,9 +35,9 @@ $message = [
         'unique'=>'Product name is already taken',
         'available'=>'Product name is not available'
     ],
-    'branch_id'=>[
-        'required'=>'Branch is required',
-        'available'=>'Branch is not available'
+    'seller_id'=>[
+        'required'=>'Seller is required',
+        'available'=>'Seller is not available'
     ],
     'product_type'=>[
         'required'=>'Product type is required'
@@ -70,7 +70,7 @@ $message = [
 if($this->validate($rule, $this->post, $message)){
 
     $values = [
-        'branch_id'=>$this->post['branch_id'],
+        'seller_id'=>$this->post['seller_id'],
         'product_type'=>$this->post['product_type'],
         'product_code'=>$this->post['product_code'],
         'product_name'=>$this->post['product_name'],
