@@ -14,7 +14,7 @@ If you want to change your database name, update `apiservice` with the new datab
 `app/migration/backups`.
 
 ## Get started
-1) Partners, Branches and Products are listed in the main directory `/` . You can get the Token and Partner name here.
+1) Partners, Sellers and Products are listed in the main directory `/` . You can get the Token and Partner name here.
 2) Clients should send parameters named "partner_name" and "partner_token" to `api` via "POST" method. `csrf` must be turned off in the firewall for external access. For more information, you can review the [Mind](https://github.com/aliyilmaz/Mind/) documentation.
 3) To help you, some rules have been defined on the firewall, know that you don't have to use it like that.
 4) You can use `apiservice/test/api` for an example client scenario.
@@ -22,8 +22,8 @@ If you want to change your database name, update `apiservice` with the new datab
 ## Creating a new partner
 Type `apiservice/new_partner` in the address line and enter, fill out the form.
 
-## Creating a new branch
-Type `apiservice/new_branch` in the address line and enter, fill out the form.
+## Creating a new seller
+Type `apiservice/new_seller` in the address line and enter, fill out the form.
 
 ## Creating a new product
 Type `apiservice/new_product` in the address line and enter, fill out the form.

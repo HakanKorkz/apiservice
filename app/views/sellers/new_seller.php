@@ -4,24 +4,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Partner</title>
+    <title>New Seller</title>
 </head>
 <body>
-    <form action="new_partner" method="post">
+    <form action="new_seller" method="post">
         <div>
-            <label for="partner_name">Partner Name:</label>
-            <input type="text" name="partner_name">
+            <label for="seller_name">Seller Name:</label>
+            <input type="text" name="seller_name">
         </div>
         <div>
-            <label for="partner_password">Partner Password:</label>
-            <input type="password" name="partner_password">
+            <label for="seller_password">Seller Password:</label>
+            <input type="password" name="seller_password">
         </div>
         <?=$_SESSION['csrf']['input'];?>
         <button type="submit">Insert</button>
     </form>
 
     <div>
-        <?php $this->addLayer('app/request/new_partner'); ?>
+        <?php $this->addLayer('app/request/sellers/new_seller'); ?>
     </div>
 </body>
 </html>

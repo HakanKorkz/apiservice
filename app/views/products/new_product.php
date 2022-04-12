@@ -9,12 +9,12 @@
 <body>
     <form action="new_product" method="post">
         <div>
-            <label for="branch_id">Select Branch:</label>
-            <select name="branch_id" id="branch_id">
+            <label for="seller_id">Select Seller:</label>
+            <select name="seller_id" id="seller_id">
                 <option value="">--Select--</option>
                 <?php
-                foreach ($this->samantha('branches', null, ['id', 'branch_name']) as $branch) {
-                    echo '<option value="' . $branch['id'] . '">' . $branch['branch_name'] . '</option>';
+                foreach ($this->samantha('sellers', null, ['id', 'seller_name']) as $seller) {
+                    echo '<option value="' . $seller['id'] . '">' . $seller['seller_name'] . '</option>';
                 }
                 ?>
             </select>
@@ -60,15 +60,15 @@
             <input type="text" name="product_price">
         </div>
         <div>
-            <label for="product_discount_price">Product Discounted Price:</label>
-            <input type="text" name="product_discount_price">
+            <label for="product_old_price">Product Discounted Price:</label>
+            <input type="text" name="product_old_price">
         </div>
         <?=$_SESSION['csrf']['input'];?>
         <button type="submit">Insert</button>
     </form>
 
     <div>
-        <?php $this->addLayer('app/request/new_product'); ?>
+        <?php $this->addLayer('app/request/products/new_product'); ?>
     </div>
 </body>
 </html>

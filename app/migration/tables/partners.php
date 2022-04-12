@@ -3,6 +3,7 @@
 $scheme = array(
     'id:increments',
     'partner_name:string@16',
+    'partner_schema:small',
     'partner_password:string',
     'partner_token:string@14',
     'partner_status:string@5',

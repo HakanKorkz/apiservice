@@ -13,7 +13,7 @@ $this->post['product_quantity'] = $this->post['product_quantity'] ?? '';
 $this->post['product_tax'] = $this->post['product_tax'] ?? '';
 $this->post['product_tax'] = in_array($this->post['product_tax'], [8, 18]) ? $this->post['product_tax'] : '';
 $this->post['product_price'] = $this->post['product_price'] ?? '';
-$this->post['product_discount_price'] = $this->post['product_discount_price'] ?? '';
+$this->post['product_old_price'] = $this->post['product_old_price'] ?? '';
 $this->post['product_status'] = $this->post['product_status'] ?? '';
 $this->post['product_status'] = in_array($this->post['product_status'], [true, false]) ? (bool)$this->post['product_status'] : null;
 
@@ -25,7 +25,7 @@ $rule = [
     'product_quantity'=>'required|numeric',
     'product_tax'=>'required|numeric',
     'product_price'=>'required|numeric',
-    'product_discount_price'=>'required|numeric',
+    'product_old_price'=>'required|numeric',
     'product_status'=>'required'
 ];
 
@@ -58,7 +58,7 @@ $message = [
         'required'=>'Product price is required',
         'numeric'=>'Product price must be numeric'
     ],
-    'product_discount_price'=>[
+    'product_old_price'=>[
         'required'=>'Product discount price is required',
         'numeric'=>'Product discount price must be numeric'
     ],
@@ -77,7 +77,7 @@ if($this->validate($rule, $this->post, $message)){
         'product_quantity'=>$this->post['product_quantity'],
         'product_tax'=>$this->post['product_tax'],
         'product_price'=>$this->post['product_price'],
-        'product_discount_price'=>$this->post['product_discount_price'],
+        'product_old_price'=>$this->post['product_old_price'],
         'product_status'=>$this->post['product_status'],
         'created_at'=>$this->timestamp,
     ];

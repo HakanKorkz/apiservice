@@ -10,7 +10,7 @@
 <body>
     <form action="api" method="post">
         <input type="text" name="partner_name" placeholder="partner_name" value="getir">
-        <input type="text" name="partner_token" placeholder="partner_token" value="9zQ37rnquAdsw4">
+        <input type="text" name="partner_token" placeholder="partner_token" value="2Qm9AqgGzmc1Qd">
         <?=$_SESSION['csrf']['input'];?>
         <input type="submit" value="Submit">
     </form>

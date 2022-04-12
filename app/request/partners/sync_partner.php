@@ -1,10 +1,9 @@
 <?php
-
-$this->addLayer('app/middleware/auth');
+$this->addLayer('app/middleware/partner_id');
+echo '// Run the code. e.g:';
 
 $partner_schema = $this->json_decode($this->amelia('partners',[
-    'partner_name'=>$this->post['partner_name'], 
-    'partner_token'=>$this->post['partner_token']
+    'id'=>$this->post['partner_id'],
 ], 
 'partner_schema'));
 
@@ -29,3 +28,4 @@ $this->print_pre($partner_schema);
 echo '<hr>';
 echo 'PARTNER PRODUCTS:<br>';
 $this->print_pre($partnerProducts);
+?>

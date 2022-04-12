@@ -1,14 +1,14 @@
 <?php
-
-if(empty($this->post)){
+if(!isset($this->post['partner_update'])){
     return null;
 }
 
+$partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
 $this->post['partner_name'] = $this->post['partner_name'] ?? '';
 $this->post['partner_password'] = $this->post['partner_password'] ?? '';
 
 $rule = [
-    'partner_name'=>'required|min-char:3|max-char:20|unique:partners',
+    'partner_name'=>'required|min-char:3|max-char:20|knownunique:partners:'.$partner['partner_name'],
     'partner_password'=>'required|min-char:6|max-char:16'
 ];
 
@@ -17,7 +17,7 @@ $message = [
         'required'=>'Partner name is required',
         'min-char'=>'Partner name must be at least 3 characters',
         'max-char'=>'Partner name must be at most 16 characters',
-        'unique'=>'Partner name is already taken'
+        'knownunique'=>'Partner name is already taken'
     ],
     'partner_password'=>[
         'required'=>'Partner password is required',
@@ -26,21 +26,23 @@ $message = [
     ]
 ];
 
+if(empty($this->post['partner_password'])){
+    unset($rule['partner_password']);
+    unset($message['partner_password']);
+} 
+
 if($this->validate($rule, $this->post, $message)){
 
     $values = [
         'partner_name'=>$this->post['partner_name'],
-        'partner_password'=>md5($this->post['partner_password']),
-        'partner_token'=>$this->generateToken(14),
         'partner_status'=>true,
-        'created_at'=>$this->timestamp
+        'updated_at'=>$this->timestamp
     ];
 
-    if($this->insert('partners', $values)){
-        echo 'Partner added.';
-    } else {
-        echo 'Partner not added.';
-    }
-} else {
-    $this->print_pre($this->errors);
-}
+    if(!empty($this->post['partner_password'])){
+        $values['partner_password'] = md5($this->post['partner_password']);
+    } 
+
+    $this->update('partners', $values, $partner['id']);
+    
+} 
