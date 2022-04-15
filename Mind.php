@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.2
+ * @version    Release: 5.0.3
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -2370,9 +2370,7 @@ class Mind extends PDO
                     }
                 }
 
-                if(!isset($data[$column])){
-                    $data[$column] = @$data[$column];
-                }
+                $data[$column] = (isset($data[$column])) ? $data[$column] : '';
 
                 // İlgili kuralın mesajı yoksa kural adı mesaj olarak belirtilir.
                 if(empty($message[$column][$name])){
@@ -2705,6 +2703,11 @@ class Mind extends PDO
                             break;
                         case 'timecode':
                             if(!$this->is_timecode($data[$column])){
+                                $this->errors[$column][$name] = $message[$column][$name];
+                            }
+                            break;
+                        case 'currencies':
+                            if(!in_array($data[$column], array_keys($this->currencies()))){
                                 $this->errors[$column][$name] = $message[$column][$name];
                             }
                             break;
