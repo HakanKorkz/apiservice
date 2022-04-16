@@ -3,7 +3,7 @@ $this->addLayer('app/middleware/partner_id');
 echo '// Run the code. e.g:';
 
 $partner_schema = $this->json_decode($this->amelia('partners',[
-    'id'=>$this->post['partner_id'],
+    'id'=>$this->post['id'],
 ], 
 'partner_schema'));
 

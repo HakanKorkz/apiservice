@@ -3,7 +3,7 @@
 if(empty($this->post['partner_schema'])){
     return null;
 }
-$partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
+$partner = $this->theodore('partners', ['id'=>$this->post['id']]);
 $this->post['partner_schema'] = $this->post['partner_schema'] ?? [];
 
 $rule = [

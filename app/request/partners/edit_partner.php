@@ -3,7 +3,7 @@ if(!isset($this->post['partner_update'])){
     return null;
 }
 
-$partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
+$partner = $this->theodore('partners', ['id'=>$this->post['id']]);
 $this->post['partner_name'] = $this->post['partner_name'] ?? '';
 $this->post['partner_password'] = $this->post['partner_password'] ?? '';
 

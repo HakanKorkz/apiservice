@@ -2,7 +2,7 @@
 
 $this->addLayer('app/middleware/partner_id');
 $this->addLayer('app/request/partners/edit_partner');
-$partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
+$partner = $this->theodore('partners', ['id'=>$this->post['id']]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,14 +11,16 @@ $partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
     <?php $this->addLayer('app/views/header');?>
 </head>
 <body>
+    <?php $this->addLayer('app/views/navbar');?>
     <div class="container">
-        <form action="edit_partner" method="post">
+        <form action="edit" method="post">
             <?=$_SESSION['csrf']['input'];?>
-            <input type="hidden" name="partner_id" value="<?=$this->post['partner_id'];?>">
+            <input type="hidden" name="id" value="<?=$this->post['id'];?>">
+            <input type="hidden" name="department" value="partner">
             <div class="row border-bottom py-2">
                 <div class="col-lg-12">
                     <h2 class="mt-4">Edit Partner 
-                        <a href="edit_schema/<?=$partner['id'];?>" class="btn btn-warning btn-sm">Edit Schema</a> 
+                        <a href="edit/partner-schema/<?=$partner['id'];?>" class="btn btn-warning btn-sm">Edit Schema</a> 
                         <button class="btn btn-primary btn-sm" name="partner_update" type="submit">Save</button>
                         <?php
                         if(isset($this->post['partner_update'])){
@@ -33,7 +35,7 @@ $partner = $this->theodore('partners', ['id'=>$this->post['partner_id']]);
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="<?=$this->base_url;?>">Home</a></li>
-                            <li class="breadcrumb-item"><a href="partners">Partners</a></li>
+                            <li class="breadcrumb-item"><a href="page/partners">Partners</a></li>
                             <li class="breadcrumb-item active" aria-current="page">Edit Partner</li>
                         </ol>
                     </nav>

@@ -6,6 +6,7 @@ if(!isset($this->post['partner_create'])){
 
 $this->post['partner_name'] = $this->post['partner_name'] ?? '';
 $this->post['partner_password'] = $this->post['partner_password'] ?? '';
+$this->post['partner_schema'] = $this->post['partner_schema'] ?? [];
 
 $rule = [
     'partner_name'=>'required|min-char:3|max-char:20|unique:partners',

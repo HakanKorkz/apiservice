@@ -8,9 +8,11 @@
     <title>Test API</title>
 </head>
 <body>
-    <form action="api" method="post">
+    <form action="test" method="post">
+        <input type="hidden" name="type" value="api">
+        <input type="hidden" name="department" value="partner">
         <input type="text" name="partner_name" placeholder="partner_name" value="getir">
-        <input type="text" name="partner_token" placeholder="partner_token" value="2Qm9AqgGzmc1Qd">
+        <input type="text" name="partner_token" placeholder="partner_token" value="tA7DI1sbz5WSja">
         <?=$_SESSION['csrf']['input'];?>
         <input type="submit" value="Submit">
     </form>

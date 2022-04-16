@@ -1,7 +1,13 @@
+<?php
+
+$this->addLayer('app/middleware/seller_id');
+$this->addLayer('app/request/sellers/edit_seller');
+$seller = $this->theodore('sellers', ['id'=>$this->post['id']]);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Products</title>
+    <title>Edit Products</title>
     <?php $this->addLayer('app/views/header');?>
     <script src="public/vue/vue.js"></script>
 
@@ -30,7 +36,7 @@
                         if(item !=""){
                             this.query = item.target.value;
                         }
-                        fetch(`api/products/${this.query}`)
+                        fetch(`api/products/${this.query}/<?=$seller['id'];?>`)
                             .then(result => result.json())
                             .then(result => {
                                 this.$set(this, 'result', result.slice(this.startLimit, this.lastLimit));
@@ -56,13 +62,14 @@
         
         <div class="row border-bottom py-2">
             <div class="col-lg-12">
-                <h2 class="mt-4">Products 
-                    <a href="new/product" class="btn btn-primary btn-sm">New Product</a> 
+                <h2 class="mt-4">Seller Products 
+                    <a href="edit/seller/<?=$seller['id'];?>" class="btn btn-warning btn-sm">Edit Seller</a> 
                 </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="<?=$this->base_url;?>">Home</a></li>
-                        <li aria-current="page" class="breadcrumb-item active">Products</li>
+                        <li class="breadcrumb-item"><a href="page/sellers">Sellers</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Seller Products</li>
                     </ol>
                 </nav>
             </div>
@@ -70,8 +77,8 @@
                 <div class="row">
                     <div class="row m-0 p-0 mb-1">
                         <div class="col-lg-12 mb-4">
-                            <input class="form-control rounded-0 p-2" style="font-size:large;font-weight:100;" v-model="query" v-on:keyup="search" id="searchBox" type="text" name="keyword" placeholder="SEARCH PRODUCT">
-                            <div class="text-center mt-4" v-if="result.length == 0"><h2>Product not found.</h2></div>
+                            <input class="form-control rounded-0 p-2" style="font-size:large;font-weight:100;" v-model="query" v-on:keyup="search" id="searchBox" type="text" name="keyword" placeholder="SEARCH SELLER PRODUCT">
+                            <div class="text-center mt-4" v-if="result.length == 0"><h2>Seller product not found.</h2></div>
                         </div>
                         <div class="col-lg-4 mb-4" v-for="product in result">
                             <div class="card">
