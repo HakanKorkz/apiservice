@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.3
+ * @version    Release: 5.0.4
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -2711,6 +2711,11 @@ class Mind extends PDO
                                 $this->errors[$column][$name] = $message[$column][$name];
                             }
                             break;
+                        case 'decimal':
+                            if(is_numeric( $data[$column] ) AND floor( $data[$column] ) != $data[$column] OR strstr($data[$column], ',')){
+                                $this->errors[$column][$name] = $message[$column][$name];
+                            }
+                            break;
                     // Geçersiz kural engellendi.
                     default:
                         $this->errors[$column][$name] = 'Invalid rule has been blocked.';
@@ -3550,11 +3555,11 @@ class Mind extends PDO
                 case 'decimal':
                     switch ($this->db['drive']) {
                         case 'mysql':
-                            $value = (isset($column['params'][1])) ? $column['params'][1] : 6.2;
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : '6,2';
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL';
                         break;
                         case 'sqlite':  
-                            $value = (isset($column['params'][1])) ? $column['params'][1] : 6.2;
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : '6,2';
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL';
                         break;   
                     }  
