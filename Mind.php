@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.4
+ * @version    Release: 5.0.5
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -2322,6 +2322,18 @@ class Mind extends PDO
     }
 
     /**
+     * Decimal detection
+     * @param string|int $decimal
+     * @return bool
+     */
+    public function is_decimal($decimal){
+        if(preg_match('/^\d*\.?\d*$/', $decimal)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Validation
      * 
      * @param array $rule
@@ -2712,7 +2724,7 @@ class Mind extends PDO
                             }
                             break;
                         case 'decimal':
-                            if(is_numeric( $data[$column] ) AND floor( $data[$column] ) != $data[$column] OR strstr($data[$column], ',')){
+                            if(!$this->is_decimal($data[$column])){
                                 $this->errors[$column][$name] = $message[$column][$name];
                             }
                             break;
