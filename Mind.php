@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.5
+ * @version    Release: 5.0.6
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -4894,27 +4894,34 @@ class Mind extends PDO
     /**
      * saveAs
      * It is the method that saves the file differently.
-     * @param string $url
+     * @param string $file_path
      * @param string|null $filename
      * @param bool|null $download
      */
-    public function saveAs($url, $filename=null, $download = true){
+    public function saveAs($file_path, $filename=null, $download = true){
 
-        if($this->remoteFileSize($url) === false){
-            $data       = $this->get_contents('', '', $url);
-            $data       = ($data != $url) ? $data : file_get_contents($url);
+        $file_path = str_replace('..', '', $file_path);
+        
+        if($this->remoteFileSize($file_path) === false){
+            $data       = $this->get_contents('', '', $file_path);
+            $data       = ($data != $file_path) ? $data : file_get_contents($file_path);
         } else {
-            $data       = $url;
+            $data       = $file_path;
         }
-        $mime_type  = ($this->is_json($data)) ? 'application/json' : mime_content_type($url);
-        $filename   = (is_null($filename)) ? basename($url) : $filename;
+        $mime_type  = ($this->is_json($data)) ? 'application/json' : mime_content_type($file_path);
+        $new_filename   = (is_null($filename)) ? basename($file_path) : $filename;
         
         header('Access-Control-Allow-Origin: *');
         header("Content-type: ".$mime_type."; charset=utf-8");
 
         if($download === true){
-            header('Content-Disposition: attachment; filename="'.$filename.'"');
+            header('Content-Disposition: attachment; filename="'.$new_filename.'"');
+        }
+
+        if(file_exists($file_path) AND is_null($filename) AND $download === false){
+            $data = readfile($file_path);
         }
         echo $data;
     }
+
 }
