@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.6
+ * @version    Release: 5.0.7
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -24,7 +24,6 @@ class Mind extends PDO
 
     public  $post           =   [];
     public  $base_url;
-    public  $allow_folders  =   'public';
     public  $page_current   =   '';
     public  $page_back      =   '';
     public  $timezone       =   'Europe/Istanbul';
@@ -37,7 +36,6 @@ class Mind extends PDO
         'lang'      =>  'EN'
     ];
 
-    public  $sms_conf       =   [];
     public  $error_status   =   false;
     public  $errors         =   [];
 
@@ -70,9 +68,6 @@ class Mind extends PDO
         date_default_timezone_set($this->timezone);
         $this->timestamp = date("Y-m-d H:i:s");
 
-        /* Directory accesses */
-        $this->allow_folders = (isset($conf['allow_folders'])) ? $conf['allow_folders'] : $this->allow_folders;
-
         /* Database connection */
         $this->dbConnect($conf);
     
@@ -93,9 +88,6 @@ class Mind extends PDO
             $this->lang['return']   = (isset($conf['translate']['return'])) ?: $conf['translate']['return'];
             $this->lang['lang']     = (isset($conf['translate']['lang'])) ?: $conf['translate']['lang'];
         }
-
-        /* Providing sms settings */
-        if(isset($conf['sms'])){ $this->sms_conf = (is_array($conf['sms'])) ?: $conf['sms']; }
 
         /* Determining the home directory path (Mind.php) */
         $baseDir = $this->get_absolute_path(dirname($_SERVER['SCRIPT_NAME']));
@@ -2751,14 +2743,6 @@ class Mind extends PDO
 
         $filename = '';
         $public_content = '';
-        $deny_content = '';
-        $allow_content = '';
-        
-        if(!empty($this->allow_folders)){
-            if(!is_array($this->allow_folders)){
-                $allow_folders = array($this->allow_folders);
-            }
-        }
 
         switch ($this->getSoftware()) {
             case ('Apache' || 'LiteSpeed'):
@@ -2770,8 +2754,6 @@ class Mind extends PDO
                     'RewriteRule ^.*$ - [NC,L]',
                     'RewriteRule ^.*$ index.php [NC,L]'
                 ));
-                $deny_content = 'Deny from all';
-                $allow_content = 'Allow from all';
                 $filename = '.htaccess';
             break;
             case 'Microsoft-IIS':
@@ -2795,18 +2777,6 @@ class Mind extends PDO
                 '</configuration>'
             ));
             
-            $deny_content = implode("\n", array(
-                "<authorization>",
-                "\t<deny users=\"?\"/>",
-                "</authorization>"
-            ));
-            $allow_content = implode("\n", array(
-                "<configuration>",
-                "\t<system.webServer>",
-                "\t\t<directoryBrowse enabled=\"true\" showFlags=\"Date,Time,Extension,Size\" />",
-                "\t\t\t</system.webServer>",
-                "</configuration>"
-            ));
             $filename = 'web.config';
             break;
             
@@ -2816,26 +2786,6 @@ class Mind extends PDO
 
             if(!file_exists($filename)){
                 $this->write($public_content, $filename);
-            }
-
-            $dirs = array_filter(glob('*'), 'is_dir');
-            
-            if(!empty($dirs)){
-                foreach ($dirs as $dir){
-    
-                    if(!empty($allow_folders)){
-                        foreach ($allow_folders as $allow_folder) {
-                            if($allow_folder == $dir AND !file_exists($dir.'/'.$filename)){
-                                $this->write($allow_content, $dir.'/'.$filename);
-                            }
-                        }
-                    }
-                    
-                    if(!file_exists($dir.'/'.$filename)){
-                        $this->write($deny_content, $dir.'/'.$filename);
-                    }
-    
-                }
             }
 
         }
@@ -2969,6 +2919,10 @@ class Mind extends PDO
      */
     public function firewall($conf=array()){
 
+        if(empty($conf['firewall']['allow']['folder'])){
+            $conf['firewall']['allow']['folder'] = array('public');
+        }
+
         if(empty($_SERVER['HTTP_USER_AGENT'])){
             $this->abort('400', 'User agent is required.');
         }
@@ -3058,16 +3012,20 @@ class Mind extends PDO
         $conf['firewall']['allow']['platform'] = (isset($conf['firewall']['allow']['platform']) ? $conf['firewall']['allow']['platform'] : []);
         $conf['firewall']['allow']['browser'] = (isset($conf['firewall']['allow']['browser']) ? $conf['firewall']['allow']['browser'] : []);
         $conf['firewall']['allow']['ip'] = (isset($conf['firewall']['allow']['ip']) ? $conf['firewall']['allow']['ip'] : []);
+        $conf['firewall']['allow']['folder'] = (isset($conf['firewall']['allow']['folder']) ? $conf['firewall']['allow']['folder'] : []);
         $conf['firewall']['deny']['platform'] = (isset($conf['firewall']['deny']['platform']) ? $conf['firewall']['deny']['platform'] : []);
         $conf['firewall']['deny']['browser'] = (isset($conf['firewall']['deny']['browser']) ? $conf['firewall']['deny']['browser'] : []);
         $conf['firewall']['deny']['ip'] = (isset($conf['firewall']['deny']['ip']) ? $conf['firewall']['deny']['ip'] : []);
+        $conf['firewall']['deny']['folder'] = (isset($conf['firewall']['deny']['folder']) ? $conf['firewall']['deny']['folder'] : []);
 
         $conf['firewall']['allow']['platform'] = (!is_array($conf['firewall']['allow']['platform']) ? [$conf['firewall']['allow']['platform']] : $conf['firewall']['allow']['platform']);
         $conf['firewall']['allow']['browser'] = (!is_array($conf['firewall']['allow']['browser']) ? [$conf['firewall']['allow']['browser']] : $conf['firewall']['allow']['browser']);
         $conf['firewall']['allow']['ip'] = (!is_array($conf['firewall']['allow']['ip']) ? [$conf['firewall']['allow']['ip']] : $conf['firewall']['allow']['ip']);
+        $conf['firewall']['allow']['folder'] = (!is_array($conf['firewall']['allow']['folder']) ? [$conf['firewall']['allow']['folder']] : $conf['firewall']['allow']['folder']);
         $conf['firewall']['deny']['platform'] = (!is_array($conf['firewall']['deny']['platform']) ? [$conf['firewall']['deny']['platform']] : $conf['firewall']['deny']['platform']);
         $conf['firewall']['deny']['browser'] = (!is_array($conf['firewall']['deny']['browser']) ? [$conf['firewall']['deny']['browser']] : $conf['firewall']['deny']['browser']);
         $conf['firewall']['deny']['ip'] = (!is_array($conf['firewall']['deny']['ip']) ? [$conf['firewall']['deny']['ip']] : $conf['firewall']['deny']['ip']);
+        $conf['firewall']['deny']['folder'] = (!is_array($conf['firewall']['deny']['folder']) ? [$conf['firewall']['deny']['folder']] : $conf['firewall']['deny']['folder']);
 
         $platform = $this->getOS();
         if(
@@ -3098,7 +3056,58 @@ class Mind extends PDO
             ){
             $this->abort('401', 'Your IP address is not allowed.');
         }
-        
+
+        $folders = array_filter(glob('*'), 'is_dir');
+        $filename = '';
+        $deny_content = '';
+        $allow_content = '';
+        switch ($this->getSoftware()) {
+            case ('Apache' || 'LiteSpeed'):
+                $deny_content = 'Deny from all';
+                $allow_content = 'Allow from all';
+                $filename = '.htaccess';
+            break;
+            case 'Microsoft-IIS':
+                
+                $deny_content = implode("\n", array(
+                    "<authorization>",
+                    "\t<deny users=\"?\"/>",
+                    "</authorization>"
+                ));
+                $allow_content = implode("\n", array(
+                    "<configuration>",
+                    "\t<system.webServer>",
+                    "\t\t<directoryBrowse enabled=\"true\" showFlags=\"Date,Time,Extension,Size\" />",
+                    "\t\t\t</system.webServer>",
+                    "</configuration>"
+                ));
+                $filename = 'web.config';
+            break;
+            
+        }
+
+        if($platform != 'Nginx'){
+            if(!empty($folders)){
+                foreach ($folders as $dir){
+    
+                    if(in_array($dir, $conf['firewall']['deny']['folder']) AND !file_exists($dir.'/'.$filename)){
+                        $this->write($deny_content, $dir.'/'.$filename);
+                    }
+                    if(in_array($dir, $conf['firewall']['allow']['folder']) AND !file_exists($dir.'/'.$filename)){
+                        $this->write($allow_content, $dir.'/'.$filename);
+                    }
+                    
+                    if(!file_exists($dir.'/'.$filename)){
+                        $this->write($deny_content, $dir.'/'.$filename);
+                    }
+                    if(!file_exists($dir.'/index.html')){
+                        $this->write(' ', $dir.'/index.html');
+                    }
+
+                }
+            }
+        }
+
     }
 
     /**
@@ -4549,64 +4558,6 @@ class Mind extends PDO
         }
 
         return $str;
-    }
-
-    /**
-     * SMS message sender
-     * 
-     * @param string $message
-     * @param string $numbers
-     * @param array|null conf
-     * @return bool
-     */
-    public function sms($message, $numbers, $conf=null){
-        
-        if(!is_null($conf) OR is_array($conf)){
-            $this->sms_conf = $conf;
-        }
-
-        foreach($this->sms_conf as $brand => $sms_conf){
-
-            switch($brand){
-            
-                case 'mutlucell':
-                    
-                    $url = 'https://smsgw.mutlucell.com/smsgw-ws/sndblkex';
-
-                    $charset = '';
-                    if(!empty($sms_conf['charset'])){
-                        if($sms_conf['charset'] === 'turkish'){
-                            $charset = ' charset="'.$sms_conf['charset'].'"';
-                        }
-                    }
-                    
-                    $xml_data ='<?xml version="1.0" encoding="UTF-8"?>'.
-                    '<smspack ka="'.$sms_conf['ka'].'" pwd="'.$sms_conf['pwd'].'" org="'.$sms_conf['org'].'"'.$charset.'>'.
-                    '<mesaj>'.
-                    
-                        '<metin>'.$message.'</metin>'.
-                    
-                        '<nums>'.$numbers.'</nums>'.
-                    
-                    '</mesaj>'.
-                    
-                    '</smspack>';
-
-                    $options = array(
-                        'post'=>$xml_data
-                    );
-
-                    $output = $this->get_contents('', '', $url, $options);
-                    if(!is_array($output)){
-                        if(strstr($output, '$')){
-                            return true;
-                        } 
-                    }
-                    return false;
-
-                    break;
-            }
-        }
     }
 
     /**
