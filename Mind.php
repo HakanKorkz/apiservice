@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.7
+ * @version    Release: 5.0.8
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -4173,6 +4173,9 @@ class Mind extends PDO
             } else {
                 $options = array('unique'=>array('directory'=>$path));
                 $newpath    = $path.$this->permalink($this->info($file['name'], 'filename'), $options).'.'.$ext;
+                if(in_array($newpath, $result)){
+                    $newpath    = $path.$this->permalink($this->info($file['name'], 'filename'), $options).'_'.$this->generateToken(8).'.'.$ext;
+                }
             }
 
             if(move_uploaded_file($file['tmp_name'], $newpath)){
