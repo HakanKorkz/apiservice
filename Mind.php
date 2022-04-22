@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.8
+ * @version    Release: 5.0.9
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -4157,7 +4157,7 @@ class Mind extends PDO
         $result = array();
 
         if(isset($files['name'])){ $files = array($files);}
-        if(!is_writable($path)){ return $result;}
+        if(!is_dir($path)){ mkdir($path, 0777, true); }
 
         foreach ($files as $file) {
 
