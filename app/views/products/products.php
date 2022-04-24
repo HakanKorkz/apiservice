@@ -78,6 +78,8 @@
                                 <div class="card-body">
                                     <h5 class="display-8 fw-bold text-dark">{{product.product_name}}</h5>                                       
                                     <h5 class="fs-4 fw-bold text-dark">{{product.product_price}} {{product.product_currency}}</h5>                                       
+                                    <a v-if="product.product_status == 0" v-bind:href="'status/product/'+product.id" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to activate the product?')"><i class="bi bi-play"></i></a>
+                                    <a v-if="product.product_status == 1" v-bind:href="'status/product/'+product.id" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to deactivate the product?')"><i class="bi bi-pause"></i></a>
                                     <a v-bind:href="'edit/product/'+product.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-gear"></i></a>
                                     <a v-bind:href="'sync/product/'+product.id" class="btn btn-primary btn-sm rounded-0" onclick="return confirm('Are you determined to realize Product Sync?')"><i class="bi bi-arrow-repeat"></i></a>
                                     <a v-bind:href="'delete/product/'+product.seller_id+'/'+product.id" class="btn btn-danger btn-sm rounded-0" onclick="return confirm('Are you determined to remove the product?')" class="card-link"><i class="bi bi-trash"></i></a>

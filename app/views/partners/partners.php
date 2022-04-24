@@ -78,6 +78,8 @@
                                 <a v-bind:href="'token/partner/'+partner.id" class="btn btn-warning btn-sm rounded-circle" onclick="return confirm('Are you sure you want to change the key?')" ><i class="bi bi-arrow-clockwise"></i></a>
                             </h5>
                             
+                            <a v-if="partner.partner_status == 0" v-bind:href="'status/partner/'+partner.id" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to activate the partner?')"><i class="bi bi-play"></i></a>
+                            <a v-if="partner.partner_status == 1" v-bind:href="'status/partner/'+partner.id" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to deactivate the partner?')"><i class="bi bi-pause"></i></a>
                             <a v-bind:href="'edit/partner/'+partner.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-gear"></i></a>
                             <a v-bind:href="'edit/partner-schema/'+partner.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-bezier2"></i></a>
                             <a v-bind:href="'sync/partner/'+partner.id" class="btn btn-primary btn-sm rounded-0" onclick="return confirm('Are you determined to realize Partner Sync?')"><i class="bi bi-arrow-repeat"></i></a>

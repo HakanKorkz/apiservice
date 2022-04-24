@@ -5,7 +5,7 @@ $options = [
         'scope'=>'like'
     ],
     'column'=>[
-        'id','partner_name','partner_schema','partner_token','created_at', 'updated_at'
+        'id','partner_name','partner_schema','partner_token', 'partner_status', 'created_at', 'updated_at'
     ],
     'format'=>'json'
 ];

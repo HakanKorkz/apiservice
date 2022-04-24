@@ -12,6 +12,7 @@ $options = [
         'product_price', 
         'product_currency', 
         'product_token',
+        'product_status',
         'created_at', 
         'updated_at'
     ]

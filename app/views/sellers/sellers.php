@@ -78,6 +78,8 @@
                                 <a v-bind:href="'token/seller/'+seller.id" class="btn btn-warning btn-sm rounded-circle" onclick="return confirm('Are you sure you want to change the key?')" ><i class="bi bi-arrow-clockwise"></i></a>
                             </h5>
                             
+                            <a v-if="seller.seller_status == 0" v-bind:href="'status/seller/'+seller.id" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to activate the seller?')"><i class="bi bi-play"></i></a>
+                            <a v-if="seller.seller_status == 1" v-bind:href="'status/seller/'+seller.id" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to deactivate the seller?')"><i class="bi bi-pause"></i></a>
                             <a v-bind:href="'edit/seller/'+seller.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-gear"></i></a>
                             <a v-bind:href="'edit/seller-schema/'+seller.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-bezier2"></i></a>
                             <a v-bind:href="'edit/seller-products/'+seller.id" class="btn btn-warning btn-sm rounded-0"><i class="bi bi-card-list"></i></a>

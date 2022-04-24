@@ -24,6 +24,7 @@ $Mind->route('edit:department@id', 'app/controller/editController');
 $Mind->route('token:department@id', 'app/controller/tokenController');
 $Mind->route('sync:department@id', 'app/controller/syncController');
 $Mind->route('delete:department@id@sub_id', 'app/controller/deleteController');
+$Mind->route('status:department@id', 'app/controller/statusController');
 $Mind->route('test:type@department@id', 'app/controller/testController');
 
 $Mind->route('install', 'app/migration/install');
