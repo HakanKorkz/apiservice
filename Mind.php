@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.0.9
+ * @version    Release: 5.1.0
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -3796,6 +3796,38 @@ class Mind extends PDO
 
     }
 
+    /**
+     * to seconds
+     * @param string $time
+     * @return int|bool
+     */
+    public function toSeconds($time){
+        if(strstr($time, ':')){
+            $timeArr = explode(':', $time);
+            if(count($timeArr) < 2){ return false; }
+            list($hours, $mins, $secs) = (count($timeArr) === 3) ? $timeArr : [$timeArr[0], $timeArr[1], 00];
+            if(!is_numeric($hours) OR !is_numeric($mins) OR !is_numeric($secs)){ return false; }
+            if($mins>59 OR $secs>59){ return false; }
+
+            return ($hours * 3600 ) + ($mins * 60 ) + $secs;            
+        }
+        return false;
+    }
+
+    /**
+     * to time
+     * @param int $seconds
+     * @return string|bool
+     */
+    public function toTime($seconds){
+        if(is_numeric($seconds)){
+            $hours = floor($seconds / 3600);
+            $mins = floor(($seconds - ($hours * 3600)) / 60);
+            $secs = $seconds - ($hours * 3600) - ($mins * 60);
+            return sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+        }
+        return false;
+    }
     /**
      * @return string
      */
