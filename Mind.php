@@ -2326,6 +2326,19 @@ class Mind extends PDO
     }
 
     /**
+     * timecodeCompare
+     * @param string $duration
+     * @param string $timecode
+     * @return bool
+     */
+    public function timecodeCompare($duration, $timecode){
+        if($this->toSeconds($duration) <= $this->toSeconds($timecode)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Validation
      * 
      * @param array $rule
