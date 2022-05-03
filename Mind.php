@@ -3850,7 +3850,7 @@ class Mind extends PDO
      * @return string
      */
     public function summary($str, $length, $more = ''){
-        return mb_substr($str, 0, $length, 'utf8').((mb_strlen($str, 'utf-8') > $length) ? $more : '');
+        return mb_substr($str, 0, $length, 'utf-8').((mb_strlen($str, 'utf-8') > $length) ? $more : '');
     }
 
     /**
