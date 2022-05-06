@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.1.1
+ * @version    Release: 5.1.2
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -121,6 +121,9 @@ class Mind extends PDO
                 case 'mysql': 
                     parent::__construct($this->db['drive'].':host='.$this->db['host'].';charset='.$this->db['charset'].';', $this->db['username'], $this->db['password']);
                 break;
+                case 'sqlsrv':
+                    parent::__construct($this->db['drive'].':Server='.$this->db['host'].';', $this->db['username'], $this->db['password']);
+                break;
                 case 'sqlite': 
                     parent::__construct($this->db['drive'].':'.$this->db['dbname']);
                 break;
@@ -156,7 +159,7 @@ class Mind extends PDO
         if($this->is_db($dbName)){
 
             switch ($this->db['drive']) {
-                case 'mysql':                    
+                case 'mysql' OR 'sqlsrv':                    
                     $this->exec("USE ".$dbName);
                 break;
             }
@@ -198,6 +201,11 @@ class Mind extends PDO
                 }
 
             break;
+            case 'sqlsrv':
+                $sql     = 'SELECT name FROM sys.databases';
+                $statement = $this->query($sql);
+                $dbnames = $statement->fetchAll(PDO::FETCH_COLUMN);
+                return $dbnames;
             
             case 'sqlite':
                 return $this->ffsearch('./', '*.sqlite');
@@ -227,6 +235,13 @@ class Mind extends PDO
                     foreach ($query as $tblName){
                         $tblNames[] = implode('', $tblName);
                     }
+                break;
+                case 'sqlsrv':
+
+                    $this->selectDB($dbname);
+                    $sql = 'SELECT name, type FROM sys.tables';
+                    $query = $this->query($sql);
+                    $tblNames = $query->fetchAll(PDO::FETCH_COLUMN);
                 break;
                 
                 case 'sqlite':
@@ -273,6 +288,15 @@ class Mind extends PDO
                     return $columns;
                 }
             break;
+            case 'sqlsrv':
+                $sql = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'' . $tblName.'\'';
+                $statement = $this->query($sql);
+                $columns = $statement->fetchAll(PDO::FETCH_COLUMN);
+                if(!in_array($tblName, $this->tableList())){
+                    return array();
+                }
+               
+            break;
             case 'sqlite':
                 
                 $statement = $this->query('PRAGMA TABLE_INFO(`'. $tblName . '`)');
@@ -306,7 +330,10 @@ class Mind extends PDO
                         $sql .= " ".$dbname." DEFAULT CHARSET=".$this->db['charset'];
                         if(!$this->query($sql)){ return false; }
                     break;
-                    
+                    case 'sqlsrv':
+                        $sql = "CREATE DATABASE";
+                        $sql .= " ".$dbname;
+                        if(!$this->query($sql)){ return false; }
                     case 'sqlite':
                         if(!file_exists($dbname) AND $dbname !== $this->db['dbname']){
                             $this->dbConnect(['db'=>['dbname'=>$dbname]]);
@@ -346,7 +373,7 @@ class Mind extends PDO
          
             try{
 
-                $sql = "CREATE TABLE `".$tblName."` ";
+                $sql = "CREATE TABLE ".$tblName." ";
                 $sql .= "(\n\t";
                 $sql .= implode(",\n\t", $this->columnSqlMaker($scheme));
                 $sql .= "\n)".$engine.";";
@@ -378,7 +405,7 @@ class Mind extends PDO
             try{
 
                 $sql = "ALTER TABLE\n";
-                $sql .= "\t`".$tblName."`\n";
+                $sql .= "\t ".$tblName."\n";
                 $sql .= implode(",\n\t", $this->columnSqlMaker($scheme, 'columnCreate'));
 
                 if(!$this->query($sql)){
@@ -435,7 +462,17 @@ class Mind extends PDO
                         return false;
                     }
                 break;
-                
+                case 'sqlsrv':
+                    try{
+                        $query = $this->query('ALTER DATABASE '.$dbname.' SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE '.$dbname.';');
+                        
+                        if(!$query){
+                            return false;
+                        }
+                    }catch (Exception $e){
+                        return false;
+                    }
+                break;
                 case 'sqlite':
                     if(file_exists($dbname)){
                         unlink($dbname);
@@ -468,26 +505,16 @@ class Mind extends PDO
         } else {
             $tblNames[] = $tblName;
         }
-        foreach ($tblNames as $tblName) {
 
-            if(!$this->is_table($tblName)){
-
-                return false;
-
+        try {
+            $this->beginTransaction();
+            foreach ($tblNames as $table) {
+                $this->query('DROP TABLE '.$table.';');
             }
-
-            try{
-
-                $sql = "DROP TABLE";
-                $sql .=" `".$tblName.'`';
-
-                $query = $this->query($sql);
-                if(!$query){
-                    return false;
-                }
-            }catch (Exception $e){
-                return false;
-            }
+            $this->commit();
+        } catch (Exception $e) {   
+            $this->rollBack();      
+            return false;
         }
         return true;
     }
@@ -528,7 +555,32 @@ class Mind extends PDO
                     return false;
                 }
             break;
-            
+            case 'sqlsrv':
+   
+                try{
+                    $this->beginTransaction();
+                    foreach ($columns as $column) {
+                        $contraint = $this->query('SELECT name FROM sys.default_constraints WHERE name LIKE \'%'.$tblName.'__'.$this->summary($column,9).'__%\';')->fetchAll(PDO::FETCH_ASSOC);
+                        $sql = '';
+                        if(isset($contraint[0]['name'])){
+                            $name = $contraint[0]['name'];
+                            $sql .= 'ALTER TABLE '.$tblName.' DROP CONSTRAINT '.$name.';';
+                        } else {
+                            $name = $column;
+                        }
+                        $sql .= 'ALTER TABLE '.$tblName.' DROP COLUMN '.$column.';';
+                        $query = $this->query($sql);
+                        if(!$query){
+                            return false;
+                        }
+                    }
+                    $this->commit();
+                }catch (Exception $e){
+                    $this->rollBack();
+                    return false;
+                }
+            break;
+                
             case 'sqlite':
                 $output = [];
                 
@@ -616,6 +668,9 @@ class Mind extends PDO
                 case 'mysql':
                     $sql = 'TRUNCATE `'.$tblName.'`';
                 break;
+                case 'sqlsrv':
+                    $sql = 'TRUNCATE TABLE '.$tblName;
+                break;
                 case 'sqlite':
                     $sql = 'DELETE FROM `'.$tblName.'`';
                 break;
@@ -699,7 +754,7 @@ class Mind extends PDO
                 $sql = '';
                 $columns = [];
                 $values = [];
-                $sql .= 'INSERT INTO `'.$tblName.'` ';
+                $sql .= 'INSERT INTO '.$tblName.' ';
                 foreach (array_keys($rows) as $col) {
                     $columns[] = $col;
                     $values[] = '?';
@@ -714,7 +769,7 @@ class Mind extends PDO
                         $sql = '';
                         $columns = [];
                         $values = [];
-                        $sql .= 'INSERT INTO `'.$table.'` ';
+                        $sql .= 'INSERT INTO '.$table.' ';
                         foreach (array_keys($data) as $col) {
                             $columns[] = $col;
                             $values[] = '?';
@@ -780,7 +835,7 @@ class Mind extends PDO
         $sql .= ' WHERE '.$column.'=?';
         try{
             $this->beginTransaction();
-            $query = $this->prepare("UPDATE".' `'.$tblName.'` SET '.$sql);
+            $query = $this->prepare("UPDATE".' '.$tblName.' SET '.$sql);
             $query->execute($values);
             $this->commit();
             return true;
@@ -856,7 +911,7 @@ class Mind extends PDO
 
             if(is_null($trigger)){
                 foreach ($needle as $value) {
-                    $query = $this->prepare("DELETE FROM".' `'.$tblName.'` '.$sql);
+                    $query = $this->prepare("DELETE FROM".' '.$tblName.' '.$sql);
                     $query->execute(array($value));
                 }
             }
@@ -864,14 +919,14 @@ class Mind extends PDO
             if(!is_null($trigger)){
                 foreach ($needle as $value) {
                     $sql = 'WHERE '.$column.'=?';
-                    $query = $this->prepare("DELETE FROM".' `'.$tblName.'` '.$sql);
+                    $query = $this->prepare("DELETE FROM".' '.$tblName.' '.$sql);
                     $query->execute(array($value));
 
                     if(is_array($trigger)){
 
                         foreach ($trigger as $table => $col) {
                             $sql = 'WHERE '.$col.'=?';
-                            $query = $this->prepare("DELETE FROM".' `'.$table.'` '.$sql);
+                            $query = $this->prepare("DELETE FROM".' '.$table.' '.$sql);
                             $query->execute(array($value));
                         }
 
@@ -1083,11 +1138,11 @@ class Mind extends PDO
 
         $result = array();
         
-        $this->sql = 'SELECT '.$sqlColumns.' FROM `'.$tblName.'` '.$sql;
+        $this->sql = 'SELECT '.$sqlColumns.' FROM '.$tblName.' '.$sql;
 
         try{
 
-            $query = $this->prepare('SELECT '.$sqlColumns.' FROM `'.$tblName.'` '.$sql);
+            $query = $this->prepare('SELECT '.$sqlColumns.' FROM '.$tblName.' '.$sql);
             $query->execute($executeArray);
             $result = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1296,7 +1351,7 @@ class Mind extends PDO
         $needle = $this->increments($tblName);
 
         switch ($this->db['drive']) {
-            case 'mysql':
+            case 'mysql' OR 'sqlsrv':
                 foreach ($this->getData($tblName, array('column'=>$needle)) as $row) {
                     if(!in_array($row[$needle], $IDs)){
                         $IDs[] = $row[$needle];
@@ -1339,6 +1394,12 @@ class Mind extends PDO
                         if($column['Extra'] == 'auto_increment'){ $columns = $column['Field']; } 
                     }
                 break;
+                case 'sqlsrv':
+                    $query = $this->query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'' . $tblName . '\' AND COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, \'IsIdentity\') = 1', PDO::FETCH_ASSOC);
+                    foreach ( $query as $column ) { 
+                        $columns = $column['COLUMN_NAME']; 
+                    }
+                break;
                 case 'sqlite':
                     $statement = $this->query("PRAGMA TABLE_INFO(`".$tblName."`)");
                     $row = $statement->fetchAll(PDO::FETCH_ASSOC); 
@@ -1376,13 +1437,16 @@ class Mind extends PDO
                 case 'mysql':
                     $sql  =  'SHOW COLUMNS FROM `' . $tblName . '`';
                 break;
+                case 'sqlsrv':
+                    $sql  =  'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = \'' . $tblName . '\';';
+                break; 
                 case 'sqlite':
                     $sql  =  'PRAGMA TABLE_INFO(`'. $tblName . '`)';
                 break;
             }
 
             $query = $this->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-
+        
             foreach ( $query as $row ) {
                 switch ($this->db['drive']) {
                     case 'mysql':
@@ -1390,6 +1454,17 @@ class Mind extends PDO
                             $row['Length'] = implode('', $this->get_contents('(',')', $row['Type']));
                             $row['Type']   = explode('(', $row['Type'])[0];
                         }
+                        
+                    break;
+                    case 'sqlsrv':
+                        $row['Type'] = $row['DATA_TYPE'];
+                        $row['Field'] = $row['COLUMN_NAME'];
+                        $row['Null']  = ($row['IS_NULLABLE'] == 'YES') ? 'NULL' : 'NOT NULL';
+                        $row['Length'] = ($row['CHARACTER_MAXIMUM_LENGTH'] == -1) ? 'MAX' : $row['CHARACTER_MAXIMUM_LENGTH'];
+                        $row['Default'] ='';
+                        $row['Extra'] = ($this->increments( $tblName) == $row['COLUMN_NAME']) ? 'auto_increment' : '';
+                        
+                        unset($row['TABLE_CATALOG'], $row['TABLE_SCHEMA'], $row['TABLE_NAME'], $row['COLUMN_NAME'], $row['ORDINAL_POSITION'], $row['COLUMN_DEFAULT'], $row['IS_NULLABLE'], $row['DATA_TYPE'], $row['CHARACTER_MAXIMUM_LENGTH'], $row['CHARACTER_OCTET_LENGTH'], $row['NUMERIC_PRECISION'], $row['NUMERIC_PRECISION_RADIX'], $row['NUMERIC_SCALE'], $row['DATETIME_PRECISION'], $row['CHARACTER_SET_CATALOG'], $row['CHARACTER_SET_SCHEMA'], $row['CHARACTER_SET_NAME'], $row['COLLATION_CATALOG'], $row['COLLATION_SCHEMA'], $row['COLLATION_NAME'], $row['DOMAIN_CATALOG'], $row['DOMAIN_SCHEMA'], $row['DOMAIN_NAME']);
                         
                     break;
                     case 'sqlite':                      
@@ -1424,12 +1499,23 @@ class Mind extends PDO
                                     $row = $row['Field'].':increments';
                                 }
                             } else {
-                                $row = $row['Field'].':int@'.$row['Length'];
+                                if(isset($row['Length'])){
+                                    $row = $row['Field'].':int@'.$row['Length'];
+                                } else {
+                                    $row = $row['Field'].':int';
+                                }
                             }
                             break;
                         case 'varchar':
                             $row = $row['Field'].':string@'.$row['Length'];
                             break;
+                        case 'nvarchar':
+                            if($row['Length'] != 'MAX'){
+                                $row = $row['Field'].':small@'.$row['Length'];
+                            } else {
+                                $row = $row['Field'].':small';
+                            }
+                        break;
                         case 'text':
                             $row = $row['Field'].':small';
                             break;
@@ -1440,7 +1526,14 @@ class Mind extends PDO
                             $row = $row['Field'].':large';
                             break;
                         case 'decimal':
-                            $row = $row['Field'].':decimal@'.$row['Length'];
+                            if($this->db['drive'] == 'sqlsrv' AND isset($row['NUMERIC_PRECISION']) AND isset($row['NUMERIC_SCALE'])){
+                                $row['Length'] = $row['NUMERIC_PRECISION'].','.$row['NUMERIC_SCALE'];
+                            }
+                            if(isset($row['Length'])){
+                                $row = $row['Field'].':decimal@'.$row['Length'];
+                            } else {
+                                $row = $row['Field'].':decimal';
+                            }
                             break;
                     }
                     $result[] = $row;
@@ -1711,6 +1804,13 @@ class Mind extends PDO
                     return false;
                 }
             break;
+            case 'sqlsrv':
+                if(in_array($dbname, $this->dbList())){
+                    return true;
+                } else {
+                    return false;
+                }
+            break;
             case 'sqlite':
                 return (isset($dbname) AND file_exists($dbname)) ? true : false;
             break;
@@ -1733,6 +1833,9 @@ class Mind extends PDO
         switch ($this->db['drive']) {
             case 'mysql':
                 $sql = 'DESCRIBE `'.$tblName.'`';
+            break;
+            case 'sqlsrv':
+                $sql = 'SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = \''.$tblName.'\'';
             break;
             case 'sqlite':
                 $sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='".$tblName."';";
@@ -3580,6 +3683,10 @@ class Mind extends PDO
                             $value = (isset($column['params'][1])) ? $column['params'][1] : 11;
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` INT('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` INT('.$value.') NULL DEFAULT NULL';
                         break;
+                        case 'sqlsrv':
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : 11;
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' INT NULL DEFAULT NULL' : $column['way'].' INT NULL DEFAULT NULL';
+                        break;
                         case 'sqlite':  
                             $value = (isset($column['params'][1])) ? $column['params'][1] : 11;
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` INT('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` INT('.$value.') NULL DEFAULT NULL';
@@ -3591,6 +3698,10 @@ class Mind extends PDO
                         case 'mysql':
                             $value = (isset($column['params'][1])) ? $column['params'][1] : '6,2';
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` DECIMAL('.$value.') NULL DEFAULT NULL';
+                        break;
+                        case 'sqlsrv':
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : '6,2';
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' DECIMAL('.$value.') NULL DEFAULT NULL' : $column['way'].' DECIMAL('.$value.') NULL DEFAULT NULL';
                         break;
                         case 'sqlite':  
                             $value = (isset($column['params'][1])) ? $column['params'][1] : '6,2';
@@ -3604,6 +3715,10 @@ class Mind extends PDO
                             $value = (isset($column['params'][1])) ? $column['params'][1] : 255;
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` VARCHAR('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` VARCHAR('.$value.') NULL DEFAULT NULL';
                         break;
+                        case 'sqlsrv':
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : 255;
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' NVARCHAR('.$value.') NULL DEFAULT NULL' : $column['way'].' NVARCHAR('.$value.') NULL DEFAULT NULL';
+                        break;
                         case 'sqlite':  
                             $value = (isset($column['params'][1])) ? $column['params'][1] : 255;                          
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` VARCHAR('.$value.') NULL DEFAULT NULL' : '`'.$column['way'].'` VARCHAR('.$value.') NULL DEFAULT NULL';
@@ -3615,6 +3730,9 @@ class Mind extends PDO
                         case 'mysql':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` TEXT NULL DEFAULT NULL' : '`'.$column['way'].'` TEXT NULL DEFAULT NULL';
                         break;
+                        case 'sqlsrv':
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' NVARCHAR(MAX) NULL DEFAULT NULL' : $column['way'].' NVARCHAR(MAX) NULL DEFAULT NULL';
+                        break;
                         case 'sqlite':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` TEXT NULL DEFAULT NULL' : '`'.$column['way'].'` TEXT NULL DEFAULT NULL';
                         break;   
@@ -3625,6 +3743,9 @@ class Mind extends PDO
                         case 'mysql':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` MEDIUMTEXT NULL DEFAULT NULL' : '`'.$column['way'].'` MEDIUMTEXT NULL DEFAULT NULL';
                         break;
+                        case 'sqlsrv':
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' NTEXT NULL DEFAULT NULL' : $column['way'].' NTEXT NULL DEFAULT NULL';
+                        break;
                         case 'sqlite':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` MEDIUMTEXT NULL DEFAULT NULL' : '`'.$column['way'].'` MEDIUMTEXT NULL DEFAULT NULL';
                         break;   
@@ -3634,6 +3755,9 @@ class Mind extends PDO
                     switch ($this->db['drive']) {
                         case 'mysql':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` LONGTEXT NULL DEFAULT NULL' : '`'.$column['way'].'` LONGTEXT NULL DEFAULT NULL'; 
+                        break;
+                        case 'sqlsrv':
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' NTEXT NULL DEFAULT NULL' : $column['way'].' NTEXT NULL DEFAULT NULL';
                         break;
                         case 'sqlite':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` LONGTEXT NULL DEFAULT NULL' : '`'.$column['way'].'` LONGTEXT NULL DEFAULT NULL'; 
@@ -3646,6 +3770,11 @@ class Mind extends PDO
                             $value = (isset($column['params'][1])) ? $column['params'][1] : 11;
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD `'.$column['way'].'` INT('.$value.') NOT NULL AUTO_INCREMENT FIRST' : '`'.$column['way'].'` INT('.$value.') NOT NULL AUTO_INCREMENT';
                             $primary_key = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD PRIMARY KEY (`'.$column['way'].'`)' : 'PRIMARY KEY (`'.$column['way'].'`)';
+                        break;
+                        case 'sqlsrv':
+                            $value = (isset($column['params'][1])) ? $column['params'][1] : 11;
+                            $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' INT PRIMARY KEY IDENTITY(1,1) NOT NULL' : $column['way'].' INT IDENTITY(1,1) NOT NULL';
+                            // $primary_key = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD '.$column['way'].' INT PRIMARY KEY IDENTITY(1,1) NOT NULL' : $column['way'].' INT IDENTITY(1,1) NOT NULL';
                         break;
                         case 'sqlite':
                             $sql[] = (!is_null($funcName) AND $funcName == 'columnCreate') ? 'ADD COLUMN `'.$column['way'].'` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL' : '`'.$column['way'].'` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL';
