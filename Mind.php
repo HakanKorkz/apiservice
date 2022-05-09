@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.1.2
+ * @version    Release: 5.1.3
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -4523,13 +4523,18 @@ class Mind extends PDO
                 if(is_array($options['post']) AND !isset($options['attachment'])){
                     $options['post'] = http_build_query($options['post']);
                 }
+
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $options['post']);
             }
             
             if(!empty($options['referer'])){
                 curl_setopt($ch, CURLOPT_REFERER, $options['referer']);
             }
-            curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+
+            if(!isset($options['header']['User-Agent'])){
+                curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+            } 
+
             $data = curl_exec($ch);
             curl_close($ch);
             
