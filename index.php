@@ -5,7 +5,7 @@ require './Mind.php';
 $conf = array(
     'db'=>[
         'drive'     =>  'mysql', // mysql, sqlite, sqlsrv
-        'host'      =>  'localhost', // sqlsrv için: www.example.com\\MSSQLSERVER,'.(int)1433
+        'host'      =>  'localhost', // For sqlsrv: www.example.com\\MSSQLSERVER,'.(int)1433
         'dbname'    =>  'apiservice', // apiservice, app/migration/apiservice.sqlite
         'username'  =>  'root',
         'password'  =>  '',
