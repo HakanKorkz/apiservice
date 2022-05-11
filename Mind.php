@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.1.3
+ * @version    Release: 5.1.4
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -381,6 +381,13 @@ class Mind extends PDO
                 if(!$this->query($sql)){
                     return false;
                 }
+
+                switch ($this->db['drive']) {
+                    case 'sqlsrv':
+                        $this->query('SET IDENTITY_INSERT '.$tblName.' ON;');
+                    break;
+                }
+
                 return true;
             }catch (Exception $e){
                 return false;
