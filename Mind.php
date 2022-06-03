@@ -3,7 +3,7 @@
 /**
  *
  * @package    Mind
- * @version    Release: 5.1.4
+ * @version    Release: 5.1.6
  * @license    GPL3
  * @author     Ali YILMAZ <aliyilmaz.work@gmail.com>
  * @category   Php Framework, Design pattern builder for PHP.
@@ -963,6 +963,36 @@ class Mind extends PDO
         $andSql = '';
         $orSql = '';
         $keywordSql = '';
+
+        $innerColumns = '';
+        if(!empty($options['join'])){            
+            
+            $joinTypes = ['INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL OUTER JOIN'];
+            if(in_array(mb_strtoupper($options['join']['name']), $joinTypes)){
+                $options['join']['name'] = mb_strtoupper($options['join']['name']);
+                $inner = [];
+                foreach($options['join']['tables'] as $table => $schema){
+                    $inner[] = $options['join']['name']." ".$table." ON ".$tblName.".".$schema['primary']."=".$table.".".$schema['secondary'];
+                    
+                    if(empty($schema['fields'])){
+                        $schema['fields'] = $this->columnList($table);
+                    }
+                    if(!is_array($schema['fields'])){
+                        $schema['fields'] = array($schema['fields']);
+                    }
+                    $xinnerColumns = [];
+    
+                    foreach ($schema['fields'] as $field) {
+                        $xinnerColumns[] = $table.'.'.$field;
+                    }
+                    $innerColumns .= ','.implode(', ', $xinnerColumns);
+                }
+                
+                $sql .= implode("\r\t", $inner).' ';
+
+            }
+        }
+
         $columns = $this->columnList($tblName);
 
         if(!empty($options['column'])){
@@ -974,7 +1004,7 @@ class Mind extends PDO
             $options['column'] = array_intersect($options['column'], $columns);
             $columns = array_values($options['column']);
         } 
-        $sqlColumns = $tblName.'.'.implode(', '.$tblName.'.', $columns);
+        $sqlColumns = $tblName.'.'.implode(', '.$tblName.'.', $columns).$innerColumns;
 
         $prefix = '';
         $suffix = ' = ?';
@@ -1113,14 +1143,14 @@ class Mind extends PDO
             !empty($options['search']['and']) OR
             !empty($options['search']['keyword'])
         ){
-            $sql = 'WHERE '.implode($delimiter, $sqlBox);            
+            $sql .= 'WHERE '.implode($delimiter, $sqlBox);            
         }
 
         if(!empty($options['sort'])){
 
             list($columnName, $sort) = explode(':', $options['sort']);
             if(in_array($sort, array('asc', 'ASC', 'desc', 'DESC'))){
-                $sql .= ' ORDER BY '.$columnName.' '.strtoupper($sort);
+                $sql .= ' ORDER BY '.$tblName.'.'.$columnName.' '.strtoupper($sort);
             }
 
         }
@@ -1142,14 +1172,13 @@ class Mind extends PDO
             $sql .= ' LIMIT '.$start.$end;
 
         }
-
         $result = array();
         
         $this->sql = 'SELECT '.$sqlColumns.' FROM '.$tblName.' '.$sql;
 
         try{
 
-            $query = $this->prepare('SELECT '.$sqlColumns.' FROM '.$tblName.' '.$sql);
+            $query = $this->prepare($this->sql);
             $query->execute($executeArray);
             $result = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -3901,7 +3930,7 @@ class Mind extends PDO
     }
 
     /**
-     * Encode size
+     * Convert size
      * @param string|int $size
      * @param string|int $precision
      * @return string|bool
@@ -3913,7 +3942,11 @@ class Mind extends PDO
         if(isset($size['size'])){
             $size = $size['size'];
         }
+        $size = (isset($size['size'])) ? $size['size'] : $size;
 
+        if(!is_numeric($size)){ return false; }
+        if($size == 0){ return '0 B'; }
+    
         if(!strstr($size, ' ')){
             $exp = floor(log($size, 1024)) | 0;
             $exp = min($exp, count($sizeLibrary) - 1);
@@ -3924,13 +3957,24 @@ class Mind extends PDO
     }
 
     /**
-     * Encode size
+     * Convert byte
      * @param string|int $size
      * @return int|bool
      */
     public function decodeSize($size)
     {
+
         $sizeLibrary = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
+
+        if(!strstr($size, ' ')){
+            $key = mb_strlen($size) - 1;
+            if($size[$key] == 'B'){
+                $size = mb_substr( $size, 0, $key).' B';
+            } else {
+                $size = mb_substr( $size, 0, $key).' '.$size[$key].'B';
+            }
+
+        }
 
         if(strstr($size, ' ')){
 
